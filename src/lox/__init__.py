@@ -29,7 +29,7 @@ def run_prompt():
         if s == "":
             break
         run(s)
-        error.had_error
+        error.had_error = False
 
 
 def run(source: str):
