@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "crafting-interpreters"
+version = "0.1.0"
+description = ""
+authors = ["Michihiro Nakamura"]
+readme = "README.md"
+packages = [{ include = "lox", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[tool.poetry.group.dev.dependencies]
+ipython = "^8.17.2"
+pytest = "^7.4.3"
+ruff = "^0.1.6"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
