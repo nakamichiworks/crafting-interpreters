@@ -23,9 +23,12 @@ def run_file(path: str):
 
 
 def run_prompt():
-    global had_error
     while True:
-        s = input("> ")
+        try:
+            s = input("> ")
+        except EOFError:
+            print("exit")
+            break
         if s == "":
             break
         run(s)
