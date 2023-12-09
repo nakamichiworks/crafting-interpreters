@@ -1,5 +1,6 @@
 """Lox grammer
-expression -> equality;
+expression -> comma;
+comma -> equality ( ( "," ) equality )*;
 equality -> comparison ( ( "!=" | "==" ) comparison )*;
 comparison -> term ( ( ">" | ">=" | "<" | "<=" ) term )*;
 term -> factor ( ( "-" | "+" ) factor )*;
@@ -83,7 +84,15 @@ class Parser:
             return
 
     def expression(self) -> Expr:
-        return self.equality()
+        return self.comma()
+
+    def comma(self) -> Expr:
+        expr = self.equality()
+        while self.match(TokenType.COMMA):
+            operator = self.previous()
+            right = self.comparison()
+            expr = Binary(expr, operator, right)
+        return expr
 
     def equality(self) -> Expr:
         expr = self.comparison()
