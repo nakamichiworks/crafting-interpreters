@@ -3,6 +3,7 @@ from typing import Any
 
 import lox.error as error
 import lox.expr as expr
+import lox.stmt as stmt
 from lox.error import LoxRuntimeError
 from lox.token_type import Token, TokenType
 
@@ -35,12 +36,27 @@ def stringify(object: Any) -> str:
 
 
 class Interpreter:
-    def interpret(self, expression: expr.Expr):
+    def interpret(self, statements: list[stmt.Stmt]):
         try:
-            value = self.evaluate(expression)
-            print(stringify(value))
+            for statement in statements:
+                self.execute(statement)
         except LoxRuntimeError as e:
             error.error_runtime(e)
+
+    @singledispatchmethod
+    def execute(self, stmt: stmt.Stmt) -> None:
+        raise NotImplementedError(
+            f"Interpreter.execute() is not implemented for {type(stmt)}"
+        )
+
+    @execute.register
+    def _(self, stmt: stmt.Expression) -> None:
+        self.evaluate(stmt.expression)
+
+    @execute.register
+    def _(self, stmt: stmt.Print) -> None:
+        value = self.evaluate(stmt.expression)
+        print(stringify(value))
 
     @singledispatchmethod
     def evaluate(self, expr: expr.Expr) -> str | float | bool | None:

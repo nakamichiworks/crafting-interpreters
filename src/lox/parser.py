@@ -1,13 +1,18 @@
 """Lox grammer
-expression -> equality;
-equality -> comparison ( ( "!=" | "==" ) comparison )*;
-comparison -> term ( ( ">" | ">=" | "<" | "<=" ) term )*;
-term -> factor ( ( "-" | "+" ) factor )*;
-factor -> unary ( ( "/" | "*" ) unary )*;
-unary -> ( "!" | "-" ) unary | primary;
-primary -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")";
+program -> statement* EOF ;
+statement -> exprStmt | printStmt ;
+exprStmt -> expression ";" ;
+printStmt -> "print" expression ";" ;
+expression -> equality ;
+equality -> comparison ( ( "!=" | "==" ) comparison )* ;
+comparison -> term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+term -> factor ( ( "-" | "+" ) factor )* ;
+factor -> unary ( ( "/" | "*" ) unary )* ;
+unary -> ( "!" | "-" ) unary | primary ;
+primary -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
 """
 import lox.error as error
+import lox.stmt as stmt
 from lox.expr import Binary, Expr, Grouping, Literal, Unary
 from lox.token_type import Token, TokenType
 
@@ -76,11 +81,26 @@ class Parser:
         self.advance()
 
     # parsing methods
-    def parse(self) -> Expr | None:
-        try:
-            return self.expression()
-        except ParseError:
-            return
+    def parse(self) -> list[stmt.Stmt]:
+        statements: list[stmt.Stmt] = []
+        while not self.is_at_end():
+            statements.append(self.statement())
+        return statements
+
+    def statement(self) -> stmt.Stmt:
+        if self.match(TokenType.PRINT):
+            return self.print_statement()
+        return self.expression_statement()
+
+    def print_statement(self) -> stmt.Print:
+        value = self.expression()
+        self.consume(TokenType.SEMICOLON, "Expect ';' after value.")
+        return stmt.Print(value)
+
+    def expression_statement(self) -> stmt.Expression:
+        expr = self.expression()
+        self.consume(TokenType.SEMICOLON, "Expect ';' after value.")
+        return stmt.Expression(expr)
 
     def expression(self) -> Expr:
         return self.equality()

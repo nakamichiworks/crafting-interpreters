@@ -44,8 +44,8 @@ def run(source: str):
     scanner = Scanner(source)
     tokens = scanner.scan_tokens()
     parser = Parser(tokens)
-    expression = parser.parse()
+    statements = parser.parse()
     if error.had_error:
         return
     interpreter = Interpreter()
-    interpreter.interpret(expression)
+    interpreter.interpret(statements)
