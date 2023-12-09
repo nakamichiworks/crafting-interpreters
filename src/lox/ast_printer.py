@@ -29,3 +29,8 @@ def _(expr: expr.Literal) -> str:
 @print_ast.register
 def _(expr: expr.Unary) -> str:
     return f"({expr.operator.lexeme} {print_ast(expr.right)})"
+
+
+@print_ast.register
+def _(expr: expr.Ternary) -> str:
+    return f"({expr.operator1.lexeme}{expr.operator2.lexeme} {print_ast(expr.left)} {print_ast(expr.middle)} {print_ast(expr.right)})"

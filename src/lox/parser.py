@@ -1,6 +1,7 @@
 """Lox grammer
 expression -> comma;
-comma -> equality ( ( "," ) equality )*;
+comma -> ternary ( ( "," ) ternary )*;
+ternary -> equality "?" ternary ":" ternary | equality
 equality -> comparison ( ( "!=" | "==" ) comparison )*;
 comparison -> term ( ( ">" | ">=" | "<" | "<=" ) term )*;
 term -> factor ( ( "-" | "+" ) factor )*;
@@ -9,7 +10,7 @@ unary -> ( "!" | "-" ) unary | primary;
 primary -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")";
 """
 import lox.error as error
-from lox.expr import Binary, Expr, Grouping, Literal, Unary
+from lox.expr import Binary, Expr, Grouping, Literal, Ternary, Unary
 from lox.token_type import Token, TokenType
 
 
@@ -87,11 +88,22 @@ class Parser:
         return self.comma()
 
     def comma(self) -> Expr:
-        expr = self.equality()
+        expr = self.ternary()
         while self.match(TokenType.COMMA):
             operator = self.previous()
-            right = self.comparison()
+            right = self.ternary()
             expr = Binary(expr, operator, right)
+        return expr
+
+    def ternary(self) -> Expr:
+        expr = self.equality()
+        if self.match(TokenType.QUESTION):
+            operator1 = self.previous()
+            middle = self.ternary()
+            self.consume(TokenType.COLON, "Expect ':' for ternary operator")
+            operator2 = self.previous()
+            right = self.ternary()
+            expr = Ternary(expr, operator1, middle, operator2, right)
         return expr
 
     def equality(self) -> Expr:

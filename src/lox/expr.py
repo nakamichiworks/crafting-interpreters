@@ -30,3 +30,12 @@ class Literal(Expr):
 class Unary(Expr):
     operator: Token
     right: Expr
+
+
+@dataclass(frozen=True)
+class Ternary(Expr):
+    left: Expr
+    operator1: Token
+    middle: Expr
+    operator2: Token
+    right: Expr
