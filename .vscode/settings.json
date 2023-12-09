@@ -1,0 +1,7 @@
+{
+    "github.copilot.editor.enableAutoCompletions": false,
+    "github.copilot.enable": {
+        "python": "false"
+    },
+    "python.analysis.typeCheckingMode": "strict"
+}

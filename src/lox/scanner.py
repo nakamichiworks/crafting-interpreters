@@ -1,7 +1,7 @@
 import string
 
 from lox.error import error
-from lox.token_type import TokenType, Token
+from lox.token_type import Token, TokenType
 
 keywords = {
     "and": TokenType.AND,
