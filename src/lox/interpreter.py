@@ -4,6 +4,7 @@ from typing import Any
 import lox.error as error
 import lox.expr as expr
 import lox.stmt as stmt
+from lox.environment import Environment
 from lox.error import LoxRuntimeError
 from lox.token_type import Token, TokenType
 
@@ -36,6 +37,9 @@ def stringify(object: Any) -> str:
 
 
 class Interpreter:
+    def __init__(self) -> None:
+        self.environment = Environment()
+
     def interpret(self, statements: list[stmt.Stmt]):
         try:
             for statement in statements:
@@ -48,6 +52,13 @@ class Interpreter:
         raise NotImplementedError(
             f"Interpreter.execute() is not implemented for {type(stmt)}"
         )
+
+    @execute.register
+    def _(self, stmt: stmt.Var) -> None:
+        value = None
+        if stmt.initializer is not None:
+            value = self.evaluate(stmt.initializer)
+        self.environment.define(stmt.name.lexeme, value)
 
     @execute.register
     def _(self, stmt: stmt.Expression) -> None:
@@ -83,6 +94,10 @@ class Interpreter:
                 return not is_truthy(right)
             case _:
                 raise Exception("Must not be reached")
+
+    @evaluate.register
+    def _(self, expr: expr.Variable) -> str | float | bool | None:
+        return self.environment.get(expr.name)
 
     @evaluate.register
     def _(self, expr: expr.Binary) -> str | float | bool | None:
