@@ -30,3 +30,8 @@ class Literal(Expr):
 class Unary(Expr):
     operator: Token
     right: Expr
+
+
+@dataclass(frozen=True)
+class Variable(Expr):
+    name: Token

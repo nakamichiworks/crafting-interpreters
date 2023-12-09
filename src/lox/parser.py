@@ -1,5 +1,7 @@
 """Lox grammer
-program -> statement* EOF ;
+program -> declaration* EOF ;
+declaration -> varDecl | statement ;
+varDecl -> "var" IDENTIFIER ( "=" expression )? ";" ;
 statement -> exprStmt | printStmt ;
 exprStmt -> expression ";" ;
 printStmt -> "print" expression ";" ;
@@ -9,11 +11,11 @@ comparison -> term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 term -> factor ( ( "-" | "+" ) factor )* ;
 factor -> unary ( ( "/" | "*" ) unary )* ;
 unary -> ( "!" | "-" ) unary | primary ;
-primary -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
+primary -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER ;
 """
 import lox.error as error
 import lox.stmt as stmt
-from lox.expr import Binary, Expr, Grouping, Literal, Unary
+from lox.expr import Binary, Expr, Grouping, Literal, Unary, Variable
 from lox.token_type import Token, TokenType
 
 
@@ -81,11 +83,28 @@ class Parser:
         self.advance()
 
     # parsing methods
-    def parse(self) -> list[stmt.Stmt]:
-        statements: list[stmt.Stmt] = []
+    def parse(self) -> list[stmt.Stmt | None]:
+        statements: list[stmt.Stmt | None] = []
         while not self.is_at_end():
-            statements.append(self.statement())
+            statements.append(self.declaration())
         return statements
+
+    def declaration(self) -> stmt.Stmt | None:
+        try:
+            if self.match(TokenType.VAR):
+                return self.var_declaration()
+            return self.statement()
+        except ParseError:
+            self.synchronize()
+            return None
+
+    def var_declaration(self) -> stmt.Var:
+        name = self.consume(TokenType.IDENTIFIER, "Expect variable name.")
+        initializer = None
+        if self.match(TokenType.EQUAL):
+            initializer = self.expression()
+        self.consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.")
+        return stmt.Var(name, initializer)
 
     def statement(self) -> stmt.Stmt:
         if self.match(TokenType.PRINT):
@@ -158,6 +177,8 @@ class Parser:
             return Literal(None)
         if self.match(TokenType.NUMBER, TokenType.STRING):
             return Literal(self.previous().literal)
+        if self.match(TokenType.IDENTIFIER):
+            return Variable(self.previous())
         if self.match(TokenType.LEFT_PAREN):
             expr = self.expression()
             self.consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")
