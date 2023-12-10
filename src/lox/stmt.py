@@ -32,6 +32,12 @@ class Print(Stmt):
 
 
 @dataclass(frozen=True)
+class While(Stmt):
+    condition: Expr
+    body: Stmt
+
+
+@dataclass(frozen=True)
 class Var(Stmt):
     name: Token
     initializer: Expr | None

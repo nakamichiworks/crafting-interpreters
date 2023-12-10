@@ -2,10 +2,11 @@
 program -> declaration* EOF ;
 declaration -> varDecl | statement ;
 varDecl -> "var" IDENTIFIER ( "=" expression )? ";" ;
-statement -> exprStmt | ifStmt | printStmt | block ;
+statement -> exprStmt | ifStmt | printStmt | whileStmt | block ;
 exprStmt -> expression ";" ;
 ifStmt -> "if" "(" expression ")" statement ( "else" statement )? ;
 printStmt -> "print" expression ";" ;
+whileStmt -> "while" "(" expression ")" statement ;
 block -> "{" declaration* "}" ;
 expression -> assignment ;
 assignment -> IDENTIFIER "=" assignment | logic_or ;
@@ -116,6 +117,8 @@ class Parser:
             return self.if_statement()
         if self.match(TokenType.PRINT):
             return self.print_statement()
+        if self.match(TokenType.WHILE):
+            return self.while_statement()
         if self.match(TokenType.LEFT_BRACE):
             return stmt.Block(self.block())
         return self.expression_statement()
@@ -134,6 +137,13 @@ class Parser:
         value = self.expression()
         self.consume(TokenType.SEMICOLON, "Expect ';' after value.")
         return stmt.Print(value)
+
+    def while_statement(self) -> stmt.While:
+        self.consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.")
+        expr = self.expression()
+        self.consume(TokenType.RIGHT_PAREN, "Expect ')' after 'while'.")
+        body = self.statement()
+        return stmt.While(expr, body)
 
     def block(self) -> list[stmt.Stmt | None]:
         statements: list[stmt.Stmt | None] = []

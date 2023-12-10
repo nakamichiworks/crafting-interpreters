@@ -77,6 +77,11 @@ class Interpreter:
         print(stringify(value))
 
     @execute.register
+    def _(self, stmt: stmt.While) -> None:
+        while is_truthy(self.evaluate(stmt.condition)):
+            self.execute(stmt.body)
+
+    @execute.register
     def _(self, stmt: stmt.Block) -> None:
         previous = self.environment
         try:
