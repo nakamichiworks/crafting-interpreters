@@ -23,6 +23,13 @@ class Binary(Expr):
 
 
 @dataclass(frozen=True)
+class Call(Expr):
+    callee: Expr
+    paren: Token
+    arguments: list[Expr]
+
+
+@dataclass(frozen=True)
 class Grouping(Expr):
     expression: Expr
 

@@ -17,12 +17,24 @@ equality -> comparison ( ( "!=" | "==" ) comparison )* ;
 comparison -> term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 term -> factor ( ( "-" | "+" ) factor )* ;
 factor -> unary ( ( "/" | "*" ) unary )* ;
-unary -> ( "!" | "-" ) unary | primary ;
+unary -> ( "!" | "-" ) unary | call ;
+call -> primary ( "(" arguments? ")" )* ;
+arguments -> expression ( "," expression )* ;
 primary -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER ;
 """
 import lox.error as error
 import lox.stmt as stmt
-from lox.expr import Assign, Binary, Expr, Grouping, Literal, Logical, Unary, Variable
+from lox.expr import (
+    Assign,
+    Binary,
+    Expr,
+    Grouping,
+    Literal,
+    Logical,
+    Unary,
+    Variable,
+    Call,
+)
 from lox.token_type import Token, TokenType
 
 
@@ -268,7 +280,27 @@ class Parser:
             operator = self.previous()
             right = self.unary()
             return Unary(operator, right)
-        return self.primary()
+        return self.call()
+
+    def call(self) -> Expr:
+        expr = self.primary()
+        while True:
+            if self.match(TokenType.LEFT_PAREN):
+                expr = self.finish_call(expr)
+            else:
+                break
+        return expr
+
+    def finish_call(self, callee: Expr) -> Expr:
+        arguments: list[Expr] = []
+        if not self.check(TokenType.RIGHT_PAREN):
+            arguments.append(self.expression())
+            while self.match(TokenType.COMMA):
+                if len(arguments) >= 255:
+                    raise self.error(self.peek(), "Can't have more than 255 arguments.")
+                arguments.append(self.expression())
+        paren = self.consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments.")
+        return Call(callee, paren, arguments)
 
     def primary(self) -> Expr:
         if self.match(TokenType.FALSE):

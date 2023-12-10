@@ -7,7 +7,7 @@ import lox.stmt as stmt
 from lox.environment import Environment
 from lox.error import LoxRuntimeError
 from lox.token_type import Token, TokenType
-
+from lox.callable import LoxCallable
 
 def is_truthy(object: Any) -> bool:
     if object is None:
@@ -92,13 +92,13 @@ class Interpreter:
             self.environment = previous
 
     @singledispatchmethod
-    def evaluate(self, expr: expr.Expr) -> str | float | bool | None:
+    def evaluate(self, expr: expr.Expr) -> str | float | bool | LoxCallable | None:
         raise NotImplementedError(
             f"Interpreter.evaluate() is not implemented for {type(expr)}"
         )
 
     @evaluate.register
-    def _(self, expr: expr.Assign) -> str | float | bool | None:
+    def _(self, expr: expr.Assign) -> str | float | bool | LoxCallable | None:
         value = self.evaluate(expr.value)
         self.environment.assign(expr.name, value)
         return value
@@ -108,7 +108,7 @@ class Interpreter:
         return expr.value
 
     @evaluate.register
-    def _(self, expr: expr.Logical) -> str | float | bool | None:
+    def _(self, expr: expr.Logical) -> str | float | bool | LoxCallable | None:
         left = self.evaluate(expr.left)
         if expr.operator.type == TokenType.OR:
             if is_truthy(left):
@@ -119,7 +119,7 @@ class Interpreter:
         return self.evaluate(expr.right)
 
     @evaluate.register
-    def _(self, expr: expr.Grouping) -> str | float | bool | None:
+    def _(self, expr: expr.Grouping) -> str | float | bool | LoxCallable | None:
         return self.evaluate(expr.expression)
 
     @evaluate.register
@@ -135,7 +135,7 @@ class Interpreter:
                 raise Exception("Must not be reached")
 
     @evaluate.register
-    def _(self, expr: expr.Variable) -> str | float | bool | None:
+    def _(self, expr: expr.Variable) -> str | float | bool | LoxCallable | None:
         return self.environment.get(expr.name)
 
     @evaluate.register
@@ -173,6 +173,19 @@ class Interpreter:
                 return left * right
             case _:
                 raise Exception("Must not be reached")
+
+    @evaluate.register
+    def _(self, expr: expr.Call) -> str | float | bool | LoxCallable | None:
+        callee = self.evaluate(expr.callee)
+        arguments: list[Any] = []
+        for argument in expr.arguments:
+            arguments.append(self.evaluate(argument))
+        if not isinstance(callee, LoxCallable):
+            raise LoxRuntimeError(expr.paren, "Can only call functions and classes.")
+        function = callee
+        if len(arguments) != function.arity:
+            raise LoxRuntimeError(expr.paren, f"Expected {function.arity} arguments but got {len(arguments)}")
+        return function(self, arguments)
 
     # utility methods
     def check_number_operand(self, operator: Token, operand: Any):
