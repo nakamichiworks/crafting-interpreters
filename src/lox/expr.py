@@ -33,6 +33,13 @@ class Literal(Expr):
 
 
 @dataclass(frozen=True)
+class Logical(Expr):
+    left: Expr
+    operator: Token
+    right: Expr
+
+
+@dataclass(frozen=True)
 class Unary(Expr):
     operator: Token
     right: Expr

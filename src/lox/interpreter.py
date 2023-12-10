@@ -103,6 +103,17 @@ class Interpreter:
         return expr.value
 
     @evaluate.register
+    def _(self, expr: expr.Logical) -> str | float | bool | None:
+        left = self.evaluate(expr.left)
+        if expr.operator.type == TokenType.OR:
+            if is_truthy(left):
+                return left
+        else:  # TokenType.AND
+            if not is_truthy(left):
+                return left
+        return self.evaluate(expr.right)
+
+    @evaluate.register
     def _(self, expr: expr.Grouping) -> str | float | bool | None:
         return self.evaluate(expr.expression)
 

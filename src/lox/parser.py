@@ -8,7 +8,9 @@ ifStmt -> "if" "(" expression ")" statement ( "else" statement )? ;
 printStmt -> "print" expression ";" ;
 block -> "{" declaration* "}" ;
 expression -> assignment ;
-assignment -> IDENTIFIER "=" assignment | equality
+assignment -> IDENTIFIER "=" assignment | logic_or ;
+logic_or -> logic_and ( "or" logic_and )* ;
+logic_and -> equality ( "and" equality )* ;
 equality -> comparison ( ( "!=" | "==" ) comparison )* ;
 comparison -> term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 term -> factor ( ( "-" | "+" ) factor )* ;
@@ -18,7 +20,7 @@ primary -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDE
 """
 import lox.error as error
 import lox.stmt as stmt
-from lox.expr import Assign, Binary, Expr, Grouping, Literal, Unary, Variable
+from lox.expr import Assign, Binary, Expr, Grouping, Literal, Logical, Unary, Variable
 from lox.token_type import Token, TokenType
 
 
@@ -149,7 +151,7 @@ class Parser:
         return self.assignment()
 
     def assignment(self) -> Expr:
-        expr = self.equality()
+        expr = self.logic_or()
         if self.match(TokenType.EQUAL):
             equals = self.previous()
             value = self.assignment()
@@ -157,6 +159,22 @@ class Parser:
                 name = expr.name
                 return Assign(name, value)
             raise self.error(equals, "Invalid assignment target.")
+        return expr
+
+    def logic_or(self) -> Expr:
+        expr = self.logic_and()
+        while self.match(TokenType.OR):
+            operator = self.previous()
+            right = self.logic_and()
+            expr = Logical(expr, operator, right)
+        return expr
+
+    def logic_and(self) -> Expr:
+        expr = self.equality()
+        while self.match(TokenType.AND):
+            operator = self.previous()
+            right = self.logic_and()
+            expr = Logical(expr, operator, right)
         return expr
 
     def equality(self) -> Expr:
