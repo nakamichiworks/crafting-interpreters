@@ -2,8 +2,9 @@
 program -> declaration* EOF ;
 declaration -> varDecl | statement ;
 varDecl -> "var" IDENTIFIER ( "=" expression )? ";" ;
-statement -> exprStmt | ifStmt | printStmt | whileStmt | block ;
+statement -> exprStmt | forStmt | ifStmt | printStmt | whileStmt | block ;
 exprStmt -> expression ";" ;
+forStmt -> "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
 ifStmt -> "if" "(" expression ")" statement ( "else" statement )? ;
 printStmt -> "print" expression ";" ;
 whileStmt -> "while" "(" expression ")" statement ;
@@ -113,6 +114,8 @@ class Parser:
         return stmt.Var(name, initializer)
 
     def statement(self) -> stmt.Stmt:
+        if self.match(TokenType.FOR):
+            return self.for_statement()
         if self.match(TokenType.IF):
             return self.if_statement()
         if self.match(TokenType.PRINT):
@@ -122,6 +125,42 @@ class Parser:
         if self.match(TokenType.LEFT_BRACE):
             return stmt.Block(self.block())
         return self.expression_statement()
+
+    def for_statement(self) -> stmt.While | stmt.Block:
+        self.consume(TokenType.LEFT_PAREN, "Expect '(' aafter 'for'.")
+
+        if self.match(TokenType.SEMICOLON):
+            initializer = None
+        elif self.match(TokenType.VAR):
+            initializer = self.var_declaration()
+        else:
+            initializer = self.expression_statement()
+
+        if not self.check(TokenType.SEMICOLON):
+            condition = self.expression()
+        else:
+            condition = None
+        self.consume(TokenType.SEMICOLON, "Expect ';' after loop condition.")
+
+        if not self.check(TokenType.RIGHT_PAREN):
+            increment = self.expression()
+        else:
+            increment = None
+        self.consume(TokenType.RIGHT_PAREN, "Expect ')' after for clauses.")
+
+        body = self.statement()
+
+        if increment is not None:
+            body = stmt.Block([body, stmt.Expression(increment)])
+
+        if condition is None:
+            condition = Literal(True)
+        body = stmt.While(condition, body)
+
+        if initializer is not None:
+            body = stmt.Block([initializer, body])
+
+        return body
 
     def if_statement(self) -> stmt.If:
         self.consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.")

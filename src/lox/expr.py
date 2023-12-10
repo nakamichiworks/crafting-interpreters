@@ -29,7 +29,7 @@ class Grouping(Expr):
 
 @dataclass(frozen=True)
 class Literal(Expr):
-    value: str | float | None
+    value: str | float | bool | None
 
 
 @dataclass(frozen=True)

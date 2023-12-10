@@ -11,7 +11,7 @@ class Stmt:
 
 @dataclass(frozen=True)
 class Block(Stmt):
-    statements: list[Stmt]
+    statements: list[Stmt | None]
 
 
 @dataclass(frozen=True)
