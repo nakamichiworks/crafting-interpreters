@@ -65,6 +65,13 @@ class Interpreter:
         self.evaluate(stmt.expression)
 
     @execute.register
+    def _(self, stmt: stmt.If) -> None:
+        if is_truthy(self.evaluate(stmt.condition)):
+            self.execute(stmt.then_branch)
+        elif stmt.else_branch is not None:
+            self.execute(stmt.else_branch)
+
+    @execute.register
     def _(self, stmt: stmt.Print) -> None:
         value = self.evaluate(stmt.expression)
         print(stringify(value))
