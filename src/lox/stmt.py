@@ -10,6 +10,11 @@ class Stmt:
 
 
 @dataclass(frozen=True)
+class Block(Stmt):
+    statements: list[Stmt]
+
+
+@dataclass(frozen=True)
 class Expression(Stmt):
     expression: Expr
 

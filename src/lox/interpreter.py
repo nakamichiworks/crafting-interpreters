@@ -69,11 +69,27 @@ class Interpreter:
         value = self.evaluate(stmt.expression)
         print(stringify(value))
 
+    @execute.register
+    def _(self, stmt: stmt.Block) -> None:
+        previous = self.environment
+        try:
+            self.environment = Environment(previous)
+            for statement in stmt.statements:
+                self.execute(statement)
+        finally:
+            self.environment = previous
+
     @singledispatchmethod
     def evaluate(self, expr: expr.Expr) -> str | float | bool | None:
         raise NotImplementedError(
             f"Interpreter.evaluate() is not implemented for {type(expr)}"
         )
+
+    @evaluate.register
+    def _(self, expr: expr.Assign) -> str | float | bool | None:
+        value = self.evaluate(expr.value)
+        self.environment.assign(expr.name, value)
+        return value
 
     @evaluate.register
     def _(self, expr: expr.Literal) -> str | float | None:

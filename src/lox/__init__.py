@@ -40,6 +40,9 @@ def run_prompt():
         error.had_error = False
 
 
+interpreter = Interpreter()
+
+
 def run(source: str):
     scanner = Scanner(source)
     tokens = scanner.scan_tokens()
@@ -47,5 +50,4 @@ def run(source: str):
     statements = parser.parse()
     if error.had_error:
         return
-    interpreter = Interpreter()
     interpreter.interpret(statements)

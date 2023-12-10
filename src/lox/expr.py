@@ -10,6 +10,12 @@ class Expr:
 
 
 @dataclass(frozen=True)
+class Assign(Expr):
+    name: Token
+    value: Expr
+
+
+@dataclass(frozen=True)
 class Binary(Expr):
     left: Expr
     operator: Token

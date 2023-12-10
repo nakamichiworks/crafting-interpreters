@@ -2,10 +2,12 @@
 program -> declaration* EOF ;
 declaration -> varDecl | statement ;
 varDecl -> "var" IDENTIFIER ( "=" expression )? ";" ;
-statement -> exprStmt | printStmt ;
+statement -> exprStmt | printStmt | block ;
 exprStmt -> expression ";" ;
 printStmt -> "print" expression ";" ;
-expression -> equality ;
+block -> "{" declaration* "}" ;
+expression -> assignment ;
+assignment -> IDENTIFIER "=" assignment | equality
 equality -> comparison ( ( "!=" | "==" ) comparison )* ;
 comparison -> term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 term -> factor ( ( "-" | "+" ) factor )* ;
@@ -15,7 +17,7 @@ primary -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDE
 """
 import lox.error as error
 import lox.stmt as stmt
-from lox.expr import Binary, Expr, Grouping, Literal, Unary, Variable
+from lox.expr import Assign, Binary, Expr, Grouping, Literal, Unary, Variable
 from lox.token_type import Token, TokenType
 
 
@@ -109,7 +111,16 @@ class Parser:
     def statement(self) -> stmt.Stmt:
         if self.match(TokenType.PRINT):
             return self.print_statement()
+        if self.match(TokenType.LEFT_BRACE):
+            return stmt.Block(self.block())
         return self.expression_statement()
+
+    def block(self) -> list[stmt.Stmt | None]:
+        statements: list[stmt.Stmt | None] = []
+        while not self.check(TokenType.RIGHT_BRACE) and not self.is_at_end():
+            statements.append(self.declaration())
+        self.consume(TokenType.RIGHT_BRACE, "Expect '}' after block.")
+        return statements
 
     def print_statement(self) -> stmt.Print:
         value = self.expression()
@@ -122,7 +133,18 @@ class Parser:
         return stmt.Expression(expr)
 
     def expression(self) -> Expr:
-        return self.equality()
+        return self.assignment()
+
+    def assignment(self) -> Expr:
+        expr = self.equality()
+        if self.match(TokenType.EQUAL):
+            equals = self.previous()
+            value = self.assignment()
+            if isinstance(expr, Variable):
+                name = expr.name
+                return Assign(name, value)
+            raise self.error(equals, "Invalid assignment target.")
+        return expr
 
     def equality(self) -> Expr:
         expr = self.comparison()
