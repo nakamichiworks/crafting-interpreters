@@ -163,3 +163,29 @@ def test_counter(capsys: pytest.CaptureFixture[str]):
     lox.run(source)
     actual = capsys.readouterr()
     assert actual.out == expected
+
+
+def test_lexical_scope(capsys: pytest.CaptureFixture[str]):
+    source = textwrap.dedent(
+        """\
+        var a = "global";
+        {
+            fun showA() {
+                print a;
+            }
+
+            showA();
+            var a = "block";
+            showA();
+        }
+        """
+    )
+    expected = textwrap.dedent(
+        """\
+        global
+        global
+        """
+    )
+    lox.run(source)
+    actual = capsys.readouterr()
+    assert actual.out == expected

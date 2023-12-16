@@ -4,6 +4,7 @@ import lox.error as error
 from lox.ast_printer import print_ast
 from lox.interpreter import Interpreter
 from lox.parser import Parser
+from lox.resolver import Resolver
 from lox.scanner import Scanner
 
 
@@ -41,6 +42,7 @@ def run_prompt():
 
 
 interpreter = Interpreter()
+resolver = Resolver(interpreter)
 
 
 def run(source: str):
