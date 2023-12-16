@@ -52,4 +52,5 @@ def run(source: str):
     statements = parser.parse()
     if error.had_error:
         return
+    resolver.resolve(statements)
     interpreter.interpret(statements)
