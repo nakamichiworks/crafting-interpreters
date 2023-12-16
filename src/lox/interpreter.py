@@ -9,6 +9,7 @@ from lox.environment import Environment
 from lox.error import LoxRuntimeError
 from lox.lox_function import LoxFunction
 from lox.native_function import Clock
+from lox.return_class import Return
 from lox.token_type import Token, TokenType
 
 
@@ -85,6 +86,13 @@ class Interpreter:
     def _(self, stmt: stmt.Print) -> None:
         value = self.evaluate(stmt.expression)
         print(stringify(value))
+
+    @execute.register
+    def _(self, stmt: stmt.Return) -> None:
+        value = None
+        if stmt.value is not None:
+            value = self.evaluate(stmt.value)
+        raise Return(value)
 
     @execute.register
     def _(self, stmt: stmt.While) -> None:

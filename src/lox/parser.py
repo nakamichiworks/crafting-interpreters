@@ -5,11 +5,12 @@ funDecl  -> "fun" function ;
 function -> IDENTIFIER "(" parameters? ")" block ;
 parameters -> IDENTIFIER ( "," IDENTIFIER )* ;
 varDecl -> "var" IDENTIFIER ( "=" expression )? ";" ;
-statement -> exprStmt | forStmt | ifStmt | printStmt | whileStmt | block ;
+statement -> exprStmt | forStmt | ifStmt | printStmt | returnStmt | whileStmt | block ;
 exprStmt -> expression ";" ;
 forStmt -> "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
 ifStmt -> "if" "(" expression ")" statement ( "else" statement )? ;
 printStmt -> "print" expression ";" ;
+returnStmt -> "return" expression? ";" ;
 whileStmt -> "while" "(" expression ")" statement ;
 block -> "{" declaration* "}" ;
 expression -> assignment ;
@@ -137,6 +138,8 @@ class Parser:
             return self.if_statement()
         if self.match(TokenType.PRINT):
             return self.print_statement()
+        if self.match(TokenType.RETURN):
+            return self.return_statement()
         if self.match(TokenType.WHILE):
             return self.while_statement()
         if self.match(TokenType.LEFT_BRACE):
@@ -144,7 +147,7 @@ class Parser:
         return self.expression_statement()
 
     def for_statement(self) -> stmt.While | stmt.Block:
-        self.consume(TokenType.LEFT_PAREN, "Expect '(' aafter 'for'.")
+        self.consume(TokenType.LEFT_PAREN, "Expect '(' after 'for'.")
 
         if self.match(TokenType.SEMICOLON):
             initializer = None
@@ -193,6 +196,14 @@ class Parser:
         value = self.expression()
         self.consume(TokenType.SEMICOLON, "Expect ';' after value.")
         return stmt.Print(value)
+
+    def return_statement(self) -> stmt.Return:
+        keyword = self.previous()
+        value = None
+        if not self.check(TokenType.SEMICOLON):
+            value = self.expression()
+        self.consume(TokenType.SEMICOLON, "Expect ';' after return value.")
+        return stmt.Return(keyword, value)
 
     def while_statement(self) -> stmt.While:
         self.consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.")

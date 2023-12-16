@@ -39,6 +39,12 @@ class Print(Stmt):
 
 
 @dataclass(frozen=True)
+class Return(Stmt):
+    keyword: Token
+    value: Expr | None
+
+
+@dataclass(frozen=True)
 class While(Stmt):
     condition: Expr
     body: Stmt

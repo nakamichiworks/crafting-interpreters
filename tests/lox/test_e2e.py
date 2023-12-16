@@ -103,3 +103,35 @@ def test_lox_function(capsys: pytest.CaptureFixture[str]):
     lox.run(source)
     actual = capsys.readouterr().out.strip()
     assert actual == expected
+
+
+def test_fibonacci_recursion(capsys: pytest.CaptureFixture[str]):
+    source = textwrap.dedent(
+        """\
+        fun fib(n) {
+            if (n <= 1) return n;
+            return fib(n - 2) + fib(n - 1);
+        }
+
+        for (var i = 0; i < 10; i = i + 1) {
+            print fib(i);
+        }
+        """
+    )
+    expected = textwrap.dedent(
+        """\
+        0
+        1
+        1
+        2
+        3
+        5
+        8
+        13
+        21
+        34
+        """
+    )
+    lox.run(source)
+    actual = capsys.readouterr()
+    assert actual.out == expected

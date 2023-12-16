@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 from lox.callable import LoxCallable
 from lox.environment import Environment
+from lox.return_class import Return
 from lox.stmt import Function
 
 if TYPE_CHECKING:
@@ -18,7 +19,10 @@ class LoxFunction(LoxCallable):
         environment = Environment(interpreter.global_env)
         for param, arg in zip(self.declaration.params, arguments):
             environment.define(param.lexeme, arg)
-        interpreter.execute_block(self.declaration.body, environment)
+        try:
+            interpreter.execute_block(self.declaration.body, environment)
+        except Return as r:
+            return r.value
 
     @property
     def arity(self) -> int:
