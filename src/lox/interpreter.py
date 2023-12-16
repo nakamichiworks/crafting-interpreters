@@ -75,7 +75,7 @@ class Interpreter:
 
     @execute.register
     def _(self, stmt: stmt.Function) -> None:
-        function = LoxFunction(stmt, self.environment)
+        function = LoxFunction(stmt, self.environment, False)
         self.environment.define(stmt.name.lexeme, function)
 
     @execute.register
@@ -122,7 +122,9 @@ class Interpreter:
         self.environment.define(stmt.name.lexeme, None)
         methods: dict[str, LoxFunction] = {}
         for method in stmt.methods:
-            methods[method.name.lexeme] = LoxFunction(method, self.environment)
+            methods[method.name.lexeme] = LoxFunction(
+                method, self.environment, method.name.lexeme == "init"
+            )
         klass = LoxClass(stmt.name.lexeme, methods)
         self.environment.assign(stmt.name, klass)
 

@@ -258,3 +258,48 @@ def test_this(capsys: pytest.CaptureFixture[str]):
     lox.run(source)
     actual = capsys.readouterr()
     assert actual.out == expected
+
+
+def test_init_1(capsys: pytest.CaptureFixture[str]):
+    source = textwrap.dedent(
+        """\
+        class Foo {
+            init() {
+                print this;
+            }
+        }
+
+        var foo = Foo();
+        print foo.init();
+        """
+    )
+    expected = textwrap.dedent(
+        """\
+        Foo instance
+        Foo instance
+        Foo instance
+        """
+    )
+    lox.run(source)
+    actual = capsys.readouterr()
+    assert actual.out == expected
+
+
+def test_init_2(capsys: pytest.CaptureFixture[str]):
+    source = textwrap.dedent(
+        """\
+        class Foo {
+            init() {
+                return "something else";
+            }
+        }
+        """
+    )
+    expected = textwrap.dedent(
+        """\
+        [line 3] Error at 'return': Can't return a value from an initializer.
+        """
+    )
+    lox.run(source)
+    actual = capsys.readouterr()
+    assert actual.out == expected

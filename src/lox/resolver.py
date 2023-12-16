@@ -11,6 +11,7 @@ from lox.token_type import Token
 class FunctionType(Enum):
     NONE = auto()
     FUNCTION = auto()
+    INITIALIZER = auto()
     METHOD = auto()
 
 
@@ -60,7 +61,12 @@ class Resolver:
         self.begin_scope()
         self.scopes[-1]["this"] = True
         for method in stmt.methods:
-            self.resolve_function(method, FunctionType.METHOD)
+            declaration = (
+                FunctionType.INITIALIZER
+                if method.name.lexeme == "init"
+                else FunctionType.METHOD
+            )
+            self.resolve_function(method, declaration)
         self.end_scope()
         self.current_class = enclosing_class
 
@@ -80,6 +86,10 @@ class Resolver:
         if self.current_function == FunctionType.NONE:
             error.error_token(stmt.keyword, "Can't return from top-lovel code.")
         if stmt.value is not None:
+            if self.current_function == FunctionType.INITIALIZER:
+                error.error_token(
+                    stmt.keyword, "Can't return a value from an initializer."
+                )
             self.visit(stmt.value)
 
     @visit.register

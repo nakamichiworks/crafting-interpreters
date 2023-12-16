@@ -13,9 +13,12 @@ if TYPE_CHECKING:
 
 
 class LoxFunction(LoxCallable):
-    def __init__(self, declaration: Function, closure: Environment) -> None:
+    def __init__(
+        self, declaration: Function, closure: Environment, is_initializer: bool
+    ) -> None:
         self.declaration = declaration
         self.closure = closure
+        self.is_initializer = is_initializer
 
     def __call__(self, interpreter: Interpreter, arguments: list[Any]) -> Any:
         environment = Environment(self.closure)
@@ -24,12 +27,17 @@ class LoxFunction(LoxCallable):
         try:
             interpreter.execute_block(self.declaration.body, environment)
         except Return as r:
+            if self.is_initializer:
+                return self.closure.get_at(0, "this")
             return r.value
+
+        if self.is_initializer:
+            return self.closure.get_at(0, "this")
 
     def bind(self, instance: LoxInstance) -> LoxFunction:
         environment = Environment(self.closure)
         environment.define("this", instance)
-        return LoxFunction(self.declaration, environment)
+        return LoxFunction(self.declaration, environment, self.is_initializer)
 
     @property
     def arity(self) -> int:
