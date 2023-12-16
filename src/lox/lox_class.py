@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from lox.callable import LoxCallable
+from lox.lox_function import LoxFunction
 from lox.lox_instance import LoxInstance
 
 if TYPE_CHECKING:
@@ -10,8 +11,9 @@ if TYPE_CHECKING:
 
 
 class LoxClass(LoxCallable):
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, methods: dict[str, LoxFunction]) -> None:
         self.name = name
+        self.methods = methods
 
     def __str__(self):
         return self.name
@@ -23,3 +25,6 @@ class LoxClass(LoxCallable):
     @property
     def arity(self) -> int:
         return 0
+
+    def find_method(self, name: str) -> LoxFunction | None:
+        return self.methods.get(name)

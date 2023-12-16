@@ -9,6 +9,7 @@ from lox.environment import Environment
 from lox.error import LoxRuntimeError
 from lox.lox_class import LoxClass
 from lox.lox_function import LoxFunction
+from lox.lox_instance import LoxInstance
 from lox.native_function import Clock
 from lox.return_class import Return
 from lox.token_type import Token, TokenType
@@ -119,7 +120,10 @@ class Interpreter:
     @execute.register
     def _(self, stmt: stmt.Class):
         self.environment.define(stmt.name.lexeme, None)
-        klass = LoxClass(stmt.name.lexeme)
+        methods: dict[str, LoxFunction] = {}
+        for method in stmt.methods:
+            methods[method.name.lexeme] = LoxFunction(method, self.environment)
+        klass = LoxClass(stmt.name.lexeme, methods)
         self.environment.assign(stmt.name, klass)
 
     def resolve(self, expr: expr.Expr, depth: int):
@@ -155,6 +159,15 @@ class Interpreter:
             if not is_truthy(left):
                 return left
         return self.evaluate(expr.right)
+
+    @evaluate.register
+    def _(self, expr: expr.Set) -> str | float | bool | LoxCallable | None:
+        obj = self.evaluate(expr.obj)
+        if not isinstance(obj, LoxInstance):
+            raise LoxRuntimeError(expr.name, "Only instances have fields.")
+        value = self.evaluate(expr.value)
+        obj.set(expr.name, value)
+        return value
 
     @evaluate.register
     def _(self, expr: expr.Grouping) -> str | float | bool | LoxCallable | None:
@@ -234,6 +247,13 @@ class Interpreter:
                 f"Expected {function.arity} arguments but got {len(arguments)}",
             )
         return function(self, arguments)
+
+    @evaluate.register
+    def _(self, expr: expr.Get) -> str | float | bool | LoxCallable | None:
+        obj = self.evaluate(expr.obj)
+        if isinstance(obj, LoxInstance):
+            return obj.get(expr.name)
+        raise LoxRuntimeError(expr.name, "Only instances have properties.")
 
     # utility methods
     def check_number_operand(self, operator: Token, operand: Any):

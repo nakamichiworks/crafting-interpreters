@@ -30,6 +30,12 @@ class Call(Expr):
 
 
 @dataclass(frozen=True)
+class Get(Expr):
+    obj: Expr
+    name: Token
+
+
+@dataclass(frozen=True)
 class Grouping(Expr):
     expression: Expr
 
@@ -44,6 +50,13 @@ class Logical(Expr):
     left: Expr
     operator: Token
     right: Expr
+
+
+@dataclass(frozen=True)
+class Set(Expr):
+    obj: Expr
+    name: Token
+    value: Expr
 
 
 @dataclass(frozen=True)

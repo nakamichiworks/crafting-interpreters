@@ -207,3 +207,25 @@ def test_class_instantiation(capsys: pytest.CaptureFixture[str]):
     lox.run(source)
     actual = capsys.readouterr()
     assert actual.out == expected
+
+
+def test_method_call(capsys: pytest.CaptureFixture[str]):
+    source = textwrap.dedent(
+        """\
+        class Bacon {
+            eat() {
+                print "Crunch crunch crunch!";
+            }
+        }
+
+        Bacon().eat();
+        """
+    )
+    expected = textwrap.dedent(
+        """\
+        Crunch crunch crunch!
+        """
+    )
+    lox.run(source)
+    actual = capsys.readouterr()
+    assert actual.out == expected

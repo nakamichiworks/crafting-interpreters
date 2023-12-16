@@ -15,7 +15,7 @@ returnStmt -> "return" expression? ";" ;
 whileStmt -> "while" "(" expression ")" statement ;
 block -> "{" declaration* "}" ;
 expression -> assignment ;
-assignment -> IDENTIFIER "=" assignment | logic_or ;
+assignment -> ( call "." )? IDENTIFIER "=" assignment | logic_or ;
 logic_or -> logic_and ( "or" logic_and )* ;
 logic_and -> equality ( "and" equality )* ;
 equality -> comparison ( ( "!=" | "==" ) comparison )* ;
@@ -23,7 +23,7 @@ comparison -> term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 term -> factor ( ( "-" | "+" ) factor )* ;
 factor -> unary ( ( "/" | "*" ) unary )* ;
 unary -> ( "!" | "-" ) unary | call ;
-call -> primary ( "(" arguments? ")" )* ;
+call -> primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
 arguments -> expression ( "," expression )* ;
 primary -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER ;
 """
@@ -34,9 +34,11 @@ from lox.expr import (
     Binary,
     Call,
     Expr,
+    Get,
     Grouping,
     Literal,
     Logical,
+    Set,
     Unary,
     Variable,
 )
@@ -268,6 +270,8 @@ class Parser:
             if isinstance(expr, Variable):
                 name = expr.name
                 return Assign(name, value)
+            elif isinstance(expr, Get):
+                return Set(expr.obj, expr.name, value)
             raise self.error(equals, "Invalid assignment target.")
         return expr
 
@@ -336,6 +340,11 @@ class Parser:
         while True:
             if self.match(TokenType.LEFT_PAREN):
                 expr = self.finish_call(expr)
+            elif self.match(TokenType.DOT):
+                name = self.consume(
+                    TokenType.IDENTIFIER, "Expect property name after '.'."
+                )
+                expr = Get(expr, name)
             else:
                 break
         return expr

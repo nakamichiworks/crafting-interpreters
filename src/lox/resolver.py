@@ -11,6 +11,7 @@ from lox.token_type import Token
 class FunctionType(Enum):
     NONE = auto()
     FUNCTION = auto()
+    METHOD = auto()
 
 
 class Resolver:
@@ -47,6 +48,8 @@ class Resolver:
     @visit.register
     def _(self, stmt: stmt.Class):
         self.declare(stmt.name)
+        for method in stmt.methods:
+            self.resolve_function(method, FunctionType.METHOD)
         self.define(stmt.name)
 
     @visit.register
@@ -106,6 +109,10 @@ class Resolver:
             self.visit(arg)
 
     @visit.register
+    def _(self, expr: expr.Get):
+        self.visit(expr.obj)
+
+    @visit.register
     def _(self, expr: expr.Grouping):
         self.visit(expr.expression)
 
@@ -117,6 +124,11 @@ class Resolver:
     def _(self, expr: expr.Logical):
         self.visit(expr.left)
         self.visit(expr.right)
+
+    @visit.register
+    def _(self, expr: expr.Set):
+        self.visit(expr.value)
+        self.visit(expr.obj)
 
     @visit.register
     def _(self, expr: expr.Unary):
