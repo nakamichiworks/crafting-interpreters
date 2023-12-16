@@ -60,6 +60,11 @@ class Set(Expr):
 
 
 @dataclass(frozen=True)
+class This(Expr):
+    keyword: Token
+
+
+@dataclass(frozen=True)
 class Unary(Expr):
     operator: Token
     right: Expr

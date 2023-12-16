@@ -229,3 +229,32 @@ def test_method_call(capsys: pytest.CaptureFixture[str]):
     lox.run(source)
     actual = capsys.readouterr()
     assert actual.out == expected
+
+
+def test_this(capsys: pytest.CaptureFixture[str]):
+    source = textwrap.dedent(
+        """\
+        class Person {
+            sayName() {
+                print this.name;
+            }
+        }
+
+        var jane = Person();
+        jane.name = "Jane";
+
+        var bill = Person();
+        bill.name = "Bill";
+
+        bill.sayName = jane.sayName;
+        bill.sayName();
+        """
+    )
+    expected = textwrap.dedent(
+        """\
+        Jane
+        """
+    )
+    lox.run(source)
+    actual = capsys.readouterr()
+    assert actual.out == expected

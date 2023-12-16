@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 from lox.callable import LoxCallable
 from lox.environment import Environment
+from lox.lox_instance import LoxInstance
 from lox.return_class import Return
 from lox.stmt import Function
 
@@ -24,6 +25,11 @@ class LoxFunction(LoxCallable):
             interpreter.execute_block(self.declaration.body, environment)
         except Return as r:
             return r.value
+
+    def bind(self, instance: LoxInstance) -> LoxFunction:
+        environment = Environment(self.closure)
+        environment.define("this", instance)
+        return LoxFunction(self.declaration, environment)
 
     @property
     def arity(self) -> int:

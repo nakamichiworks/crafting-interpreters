@@ -14,11 +14,17 @@ class FunctionType(Enum):
     METHOD = auto()
 
 
+class ClassType(Enum):
+    NONE = auto()
+    CLASS = auto()
+
+
 class Resolver:
     def __init__(self, interpreter: Interpreter):
         self.interpreter = interpreter
         self.scopes: list[dict[str, bool]] = []
         self.current_function = FunctionType.NONE
+        self.current_class = ClassType.NONE
 
     def resolve(self, statements: list[stmt.Stmt | None]):
         for statement in statements:
@@ -47,10 +53,16 @@ class Resolver:
 
     @visit.register
     def _(self, stmt: stmt.Class):
+        enclosing_class = self.current_class
+        self.current_class = ClassType.CLASS
         self.declare(stmt.name)
+        self.define(stmt.name)
+        self.begin_scope()
+        self.scopes[-1]["this"] = True
         for method in stmt.methods:
             self.resolve_function(method, FunctionType.METHOD)
-        self.define(stmt.name)
+        self.end_scope()
+        self.current_class = enclosing_class
 
     @visit.register
     def _(self, stmt: stmt.If):
@@ -129,6 +141,13 @@ class Resolver:
     def _(self, expr: expr.Set):
         self.visit(expr.value)
         self.visit(expr.obj)
+
+    @visit.register
+    def _(self, expr: expr.This):
+        if self.current_class == ClassType.NONE:
+            error.error_token(expr.keyword, "Can't use 'this' outside of a class.")
+            return
+        self.resolve_local(expr, expr.keyword)
 
     @visit.register
     def _(self, expr: expr.Unary):

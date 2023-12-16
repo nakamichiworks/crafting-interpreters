@@ -170,6 +170,10 @@ class Interpreter:
         return value
 
     @evaluate.register
+    def _(self, expr: expr.This) -> LoxInstance:
+        return self.lookup_variable(expr.keyword, expr)
+
+    @evaluate.register
     def _(self, expr: expr.Grouping) -> str | float | bool | LoxCallable | None:
         return self.evaluate(expr.expression)
 
