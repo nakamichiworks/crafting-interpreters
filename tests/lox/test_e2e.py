@@ -2,10 +2,11 @@ import textwrap
 
 import pytest
 
-import lox
+from lox import Lox
 
 
 def test_for_fibonacci(capsys: pytest.CaptureFixture[str]):
+    lox = Lox()
     source = textwrap.dedent(
         """\
         var a = 0;
@@ -34,6 +35,7 @@ def test_for_fibonacci(capsys: pytest.CaptureFixture[str]):
 
 
 def test_scope(capsys: pytest.CaptureFixture[str]):
+    lox = Lox()
     source = textwrap.dedent(
         """\
         var a = "global a";
@@ -77,6 +79,7 @@ def test_scope(capsys: pytest.CaptureFixture[str]):
 
 @pytest.mark.freeze_time("2023-12-16 18:17:00")
 def test_native_function(capsys: pytest.CaptureFixture[str]):
+    lox = Lox()
     source = textwrap.dedent(
         """\
         var t = clock();
@@ -90,6 +93,7 @@ def test_native_function(capsys: pytest.CaptureFixture[str]):
 
 
 def test_lox_function(capsys: pytest.CaptureFixture[str]):
+    lox = Lox()
     source = textwrap.dedent(
         """\
         fun sayHi(first, last) {
@@ -106,6 +110,7 @@ def test_lox_function(capsys: pytest.CaptureFixture[str]):
 
 
 def test_fibonacci_recursion(capsys: pytest.CaptureFixture[str]):
+    lox = Lox()
     source = textwrap.dedent(
         """\
         fun fib(n) {
@@ -138,6 +143,7 @@ def test_fibonacci_recursion(capsys: pytest.CaptureFixture[str]):
 
 
 def test_counter(capsys: pytest.CaptureFixture[str]):
+    lox = Lox()
     source = textwrap.dedent(
         """\
         fun makeCounter() {
@@ -166,6 +172,7 @@ def test_counter(capsys: pytest.CaptureFixture[str]):
 
 
 def test_lexical_scope(capsys: pytest.CaptureFixture[str]):
+    lox = Lox()
     source = textwrap.dedent(
         """\
         var a = "global";
@@ -192,6 +199,7 @@ def test_lexical_scope(capsys: pytest.CaptureFixture[str]):
 
 
 def test_class_instantiation(capsys: pytest.CaptureFixture[str]):
+    lox = Lox()
     source = textwrap.dedent(
         """\
         class Bagel {}
@@ -210,6 +218,7 @@ def test_class_instantiation(capsys: pytest.CaptureFixture[str]):
 
 
 def test_method_call(capsys: pytest.CaptureFixture[str]):
+    lox = Lox()
     source = textwrap.dedent(
         """\
         class Bacon {
@@ -232,6 +241,7 @@ def test_method_call(capsys: pytest.CaptureFixture[str]):
 
 
 def test_this(capsys: pytest.CaptureFixture[str]):
+    lox = Lox()
     source = textwrap.dedent(
         """\
         class Person {
@@ -261,6 +271,7 @@ def test_this(capsys: pytest.CaptureFixture[str]):
 
 
 def test_init_1(capsys: pytest.CaptureFixture[str]):
+    lox = Lox()
     source = textwrap.dedent(
         """\
         class Foo {
@@ -286,6 +297,7 @@ def test_init_1(capsys: pytest.CaptureFixture[str]):
 
 
 def test_init_2(capsys: pytest.CaptureFixture[str]):
+    lox = Lox()
     source = textwrap.dedent(
         """\
         class Foo {
@@ -303,3 +315,29 @@ def test_init_2(capsys: pytest.CaptureFixture[str]):
     lox.run(source)
     actual = capsys.readouterr()
     assert actual.out == expected
+
+
+def test_init_3(capsys: pytest.CaptureFixture[str]):
+    lox = Lox()
+    source = textwrap.dedent(
+        """\
+        class Foo {
+            init() {
+                return;
+            }
+        }
+
+        var foo = Foo();
+        print foo.init();
+        """
+    )
+    expected = textwrap.dedent(
+        """\
+        Foo instance
+        """
+    )
+    lox.run(source)
+    actual = capsys.readouterr()
+    assert actual.out == expected
+
+
