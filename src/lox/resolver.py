@@ -1,3 +1,4 @@
+from enum import Enum, auto
 from functools import singledispatchmethod
 
 import lox.error as error
@@ -7,22 +8,31 @@ from lox.interpreter import Interpreter
 from lox.token_type import Token
 
 
+class FunctionType(Enum):
+    NONE = auto()
+    FUNCTION = auto()
+
+
 class Resolver:
     def __init__(self, interpreter: Interpreter):
         self.interpreter = interpreter
         self.scopes: list[dict[str, bool]] = []
+        self.current_function = FunctionType.NONE
 
     def resolve(self, statements: list[stmt.Stmt | None]):
         for statement in statements:
             self.visit(statement)
 
-    def resolve_function(self, function: stmt.Function):
+    def resolve_function(self, function: stmt.Function, typ: FunctionType):
+        enclosing_function = self.current_function
+        self.current_function = typ
         self.begin_scope()
         for param in function.params:
             self.declare(param)
             self.define(param)
         self.resolve(function.body)
         self.end_scope()
+        self.current_function = enclosing_function
 
     @singledispatchmethod
     def visit(self, stmt: stmt.Stmt | expr.Expr) -> None:
@@ -47,6 +57,8 @@ class Resolver:
 
     @visit.register
     def _(self, stmt: stmt.Return):
+        if self.current_function == FunctionType.NONE:
+            error.error_token(stmt.keyword, "Can't return from top-lovel code.")
         if stmt.value is not None:
             self.visit(stmt.value)
 
@@ -58,7 +70,7 @@ class Resolver:
     def _(self, stmt: stmt.Function):
         self.declare(stmt.name)
         self.define(stmt.name)
-        self.resolve_function(stmt)
+        self.resolve_function(stmt, FunctionType.FUNCTION)
 
     @visit.register
     def _(self, stmt: stmt.Var):
@@ -122,7 +134,10 @@ class Resolver:
     def declare(self, name: Token):
         if not self.scopes:
             return
-        self.scopes[-1][name.lexeme] = False
+        scope = self.scopes[-1]
+        if name.lexeme in scope:
+            error.error_token(name, "Already a variable with this name in this scope.")
+        scope[name.lexeme] = False
 
     def define(self, name: Token):
         if not self.scopes:

@@ -53,4 +53,6 @@ def run(source: str):
     if error.had_error:
         return
     resolver.resolve(statements)
+    if error.had_error:
+        return
     interpreter.interpret(statements)
