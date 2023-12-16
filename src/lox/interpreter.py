@@ -7,6 +7,7 @@ import lox.stmt as stmt
 from lox.callable import LoxCallable
 from lox.environment import Environment
 from lox.error import LoxRuntimeError
+from lox.lox_function import LoxFunction
 from lox.native_function import Clock
 from lox.token_type import Token, TokenType
 
@@ -69,6 +70,11 @@ class Interpreter:
         self.evaluate(stmt.expression)
 
     @execute.register
+    def _(self, stmt: stmt.Function) -> None:
+        function = LoxFunction(stmt)
+        self.environment.define(stmt.name.lexeme, function)
+
+    @execute.register
     def _(self, stmt: stmt.If) -> None:
         if is_truthy(self.evaluate(stmt.condition)):
             self.execute(stmt.then_branch)
@@ -87,10 +93,15 @@ class Interpreter:
 
     @execute.register
     def _(self, stmt: stmt.Block) -> None:
+        self.execute_block(stmt.statements, Environment(self.environment))
+
+    def execute_block(
+        self, statements: list[stmt.Stmt | None], environment: Environment
+    ):
         previous = self.environment
+        self.environment = environment
         try:
-            self.environment = Environment(previous)
-            for statement in stmt.statements:
+            for statement in statements:
                 self.execute(statement)
         finally:
             self.environment = previous

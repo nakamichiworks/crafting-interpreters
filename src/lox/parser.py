@@ -1,6 +1,9 @@
 """Lox grammer
 program -> declaration* EOF ;
-declaration -> varDecl | statement ;
+declaration -> funDecl | varDecl | statement ;
+funDecl  -> "fun" function ;
+function -> IDENTIFIER "(" parameters? ")" block ;
+parameters -> IDENTIFIER ( "," IDENTIFIER )* ;
 varDecl -> "var" IDENTIFIER ( "=" expression )? ";" ;
 statement -> exprStmt | forStmt | ifStmt | printStmt | whileStmt | block ;
 exprStmt -> expression ";" ;
@@ -110,6 +113,8 @@ class Parser:
 
     def declaration(self) -> stmt.Stmt | None:
         try:
+            if self.match(TokenType.FUN):
+                return self.function("function")
             if self.match(TokenType.VAR):
                 return self.var_declaration()
             return self.statement()
@@ -207,6 +212,27 @@ class Parser:
         expr = self.expression()
         self.consume(TokenType.SEMICOLON, "Expect ';' after value.")
         return stmt.Expression(expr)
+
+    def function(self, kind: str) -> stmt.Function:
+        name = self.consume(TokenType.IDENTIFIER, f"Expect {kind} name.")
+        self.consume(TokenType.LEFT_PAREN, f"Expect '(' after {kind} name.")
+        parameters: list[Token] = []
+        if not self.check(TokenType.RIGHT_PAREN):
+            parameters.append(
+                self.consume(TokenType.IDENTIFIER, "Expect parameter name.")
+            )
+            while self.match(TokenType.COMMA):
+                if len(parameters) > 255:
+                    error.error_token(
+                        self.peek(), "Can't have more than 255 parameters."
+                    )
+                parameters.append(
+                    self.consume(TokenType.IDENTIFIER, "Expect parameter name.")
+                )
+            self.consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.")
+        self.consume(TokenType.LEFT_BRACE, f"Expect '{{' before {kind} body.")
+        body = self.block()
+        return stmt.Function(name, parameters, body)
 
     def expression(self) -> Expr:
         return self.assignment()
