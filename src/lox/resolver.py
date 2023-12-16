@@ -18,6 +18,7 @@ class FunctionType(Enum):
 class ClassType(Enum):
     NONE = auto()
     CLASS = auto()
+    SUBCLASS = auto()
 
 
 class Resolver:
@@ -58,6 +59,18 @@ class Resolver:
         self.current_class = ClassType.CLASS
         self.declare(stmt.name)
         self.define(stmt.name)
+        if (
+            stmt.superclass is not None
+            and stmt.name.lexeme == stmt.superclass.name.lexeme
+        ):
+            error.error_token(
+                stmt.superclass.name, "A class can't inherit from itself."
+            )
+        if stmt.superclass is not None:
+            self.current_class = ClassType.SUBCLASS
+            self.visit(stmt.superclass)
+            self.begin_scope()
+            self.scopes[-1]["super"] = True
         self.begin_scope()
         self.scopes[-1]["this"] = True
         for method in stmt.methods:
@@ -68,6 +81,8 @@ class Resolver:
             )
             self.resolve_function(method, declaration)
         self.end_scope()
+        if stmt.superclass is not None:
+            self.end_scope()
         self.current_class = enclosing_class
 
     @visit.register
@@ -151,6 +166,16 @@ class Resolver:
     def _(self, expr: expr.Set):
         self.visit(expr.value)
         self.visit(expr.obj)
+
+    @visit.register
+    def _(self, expr: expr.Super):
+        if self.current_class == ClassType.NONE:
+            error.error_token(expr.keyword, "Can't use 'super' outside of a class")
+        elif self.current_class != ClassType.SUBCLASS:
+            error.error_token(
+                expr.keyword, "Can't use 'super' in a class with no superclass."
+            )
+        self.resolve_local(expr, expr.keyword)
 
     @visit.register
     def _(self, expr: expr.This):

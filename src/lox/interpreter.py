@@ -119,13 +119,25 @@ class Interpreter:
 
     @execute.register
     def _(self, stmt: stmt.Class):
+        superclass = None
+        if stmt.superclass is not None:
+            superclass = self.evaluate(stmt.superclass)
+            if not isinstance(superclass, LoxClass):
+                raise LoxRuntimeError(
+                    stmt.superclass.name, "Superclass must be a class."
+                )
         self.environment.define(stmt.name.lexeme, None)
+        if stmt.superclass is not None:
+            self.environment = Environment(self.environment)
+            self.environment.define("super", superclass)
         methods: dict[str, LoxFunction] = {}
         for method in stmt.methods:
             methods[method.name.lexeme] = LoxFunction(
                 method, self.environment, method.name.lexeme == "init"
             )
-        klass = LoxClass(stmt.name.lexeme, methods)
+        klass = LoxClass(stmt.name.lexeme, superclass, methods)
+        if superclass is not None:
+            self.environment = self.environment.enclosing
         self.environment.assign(stmt.name, klass)
 
     def resolve(self, expr: expr.Expr, depth: int):
@@ -170,6 +182,18 @@ class Interpreter:
         value = self.evaluate(expr.value)
         obj.set(expr.name, value)
         return value
+
+    @evaluate.register
+    def _(self, expr: expr.Super) -> LoxCallable:
+        distance = self.locals.get(id(expr))
+        superclass = self.environment.get_at(distance, "super")
+        obj = self.environment.get_at(distance - 1, "this")
+        method = superclass.find_method(expr.method.lexeme)
+        if method is None:
+            raise LoxRuntimeError(
+                expr.method, f"Undefined property '{expr.method.lexeme}'."
+            )
+        return method.bind(obj)
 
     @evaluate.register
     def _(self, expr: expr.This) -> LoxInstance:

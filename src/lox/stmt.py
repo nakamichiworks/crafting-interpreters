@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from lox.expr import Expr
+from lox.expr import Expr, Variable
 from lox.token_type import Token
 
 
@@ -19,6 +19,7 @@ class Block(Stmt):
 @dataclass(frozen=True)
 class Class(Stmt):
     name: Token
+    superclass: Variable | None
     methods: list[Function]
 
 

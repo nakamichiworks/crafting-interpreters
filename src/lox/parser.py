@@ -1,7 +1,7 @@
 """Lox grammer
 program -> declaration* EOF ;
 declaration -> classDecl | funDecl | varDecl | statement ;
-classDecl -> "class" IDENTIFIER "{" function* "}" ;
+classDecl -> "class" IDENTIFIER ( "<" IDENTIFIER )? "{" function* "}" ;
 funDecl  -> "fun" function ;
 function -> IDENTIFIER "(" parameters? ")" block ;
 parameters -> IDENTIFIER ( "," IDENTIFIER )* ;
@@ -39,6 +39,7 @@ from lox.expr import (
     Literal,
     Logical,
     Set,
+    Super,
     This,
     Unary,
     Variable,
@@ -131,12 +132,16 @@ class Parser:
 
     def class_declaration(self) -> stmt.Class:
         name = self.consume(TokenType.IDENTIFIER, "Expect class name.")
+        superclass = None
+        if self.match(TokenType.LESS):
+            self.consume(TokenType.IDENTIFIER, "Expect superclass name.")
+            superclass = Variable(self.previous())
         self.consume(TokenType.LEFT_BRACE, "Expect '{' after class name.")
         methods: list[stmt.Function] = []
         while not self.check(TokenType.RIGHT_BRACE) and not self.is_at_end():
             methods.append(self.function("method"))
         self.consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.")
-        return stmt.Class(name, methods)
+        return stmt.Class(name, superclass, methods)
 
     def var_declaration(self) -> stmt.Var:
         name = self.consume(TokenType.IDENTIFIER, "Expect variable name.")
@@ -370,6 +375,13 @@ class Parser:
             return Literal(None)
         if self.match(TokenType.NUMBER, TokenType.STRING):
             return Literal(self.previous().literal)
+        if self.match(TokenType.SUPER):
+            keyword = self.previous()
+            self.consume(TokenType.DOT, "Expect '.' after 'super'.")
+            method = self.consume(
+                TokenType.IDENTIFIER, "Expect superclass method name."
+            )
+            return Super(keyword, method)
         if self.match(TokenType.THIS):
             return This(self.previous())
         if self.match(TokenType.IDENTIFIER):
@@ -378,4 +390,4 @@ class Parser:
             expr = self.expression()
             self.consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")
             return Grouping(expr)
-        raise self.error(self.peek(), "Expect expression")
+        raise self.error(self.peek(), "Expect expression.")

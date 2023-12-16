@@ -341,3 +341,92 @@ def test_init_3(capsys: pytest.CaptureFixture[str]):
     assert actual.out == expected
 
 
+def test_superclass(capsys: pytest.CaptureFixture[str]):
+    lox = Lox()
+    source = textwrap.dedent(
+        """\
+        class Doughnut {
+            cook() {
+                print "Fry until golden brown.";
+            }
+        }
+        class BostonCream < Doughnut {}
+        BostonCream().cook();
+        """
+    )
+    expected = textwrap.dedent(
+        """\
+        Fry until golden brown.
+        """
+    )
+    lox.run(source)
+    actual = capsys.readouterr()
+    assert actual.out == expected
+
+
+def test_super_method(capsys: pytest.CaptureFixture[str]):
+    lox = Lox()
+    source = textwrap.dedent(
+        """\
+        class Doughnut {
+            cook() {
+                print "Fry until golden brown.";
+            }
+        }
+        class BostonCream < Doughnut {
+            cook() {
+                super.cook();
+                print "Pipe full of custard and coat with chocolate.";
+            }
+        }
+        BostonCream().cook();
+        """
+    )
+    expected = textwrap.dedent(
+        """\
+        Fry until golden brown.
+        Pipe full of custard and coat with chocolate.
+        """
+    )
+    lox.run(source)
+    actual = capsys.readouterr()
+    assert actual.out == expected
+
+
+def test_invalid_super_1(capsys: pytest.CaptureFixture[str]):
+    lox = Lox()
+    source = textwrap.dedent(
+        """\
+        class Eclair {
+            cook() {
+                super.cook();
+                print "Pipe full of creme patissiere.";
+            }
+        }
+        """
+    )
+    expected = textwrap.dedent(
+        """\
+        [line 3] Error at 'super': Can't use 'super' in a class with no superclass.
+        """
+    )
+    lox.run(source)
+    actual = capsys.readouterr()
+    assert actual.out == expected
+
+
+def test_invalid_super_2(capsys: pytest.CaptureFixture[str]):
+    lox = Lox()
+    source = textwrap.dedent(
+        """\
+        super.method();
+        """
+    )
+    expected = textwrap.dedent(
+        """\
+        [line 1] Error at 'super': Can't use 'super' outside of a class
+        """
+    )
+    lox.run(source)
+    actual = capsys.readouterr()
+    assert actual.out == expected
