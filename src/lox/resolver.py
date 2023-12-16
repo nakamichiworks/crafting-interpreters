@@ -133,3 +133,4 @@ class Resolver:
         for i in reversed(range(len(self.scopes))):
             if name.lexeme in self.scopes[i]:
                 self.interpreter.resolve(expr, len(self.scopes) - 1 - i)
+                return

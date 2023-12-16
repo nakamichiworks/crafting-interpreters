@@ -45,7 +45,7 @@ class Interpreter:
         self.global_env = Environment()
         self.environment = self.global_env
         self.global_env.define("clock", Clock())
-        self.locals: dict[expr.Expr, int] = {}
+        self.locals: dict[int, int] = {}
 
     def interpret(self, statements: list[stmt.Stmt]):
         try:
@@ -116,7 +116,7 @@ class Interpreter:
             self.environment = previous
 
     def resolve(self, expr: expr.Expr, depth: int):
-        self.locals[expr] = depth
+        self.locals[id(expr)] = depth
 
     @singledispatchmethod
     def evaluate(self, expr: expr.Expr) -> str | float | bool | LoxCallable | None:
@@ -127,7 +127,7 @@ class Interpreter:
     @evaluate.register
     def _(self, expr: expr.Assign) -> str | float | bool | LoxCallable | None:
         value = self.evaluate(expr.value)
-        distance = self.locals.get(expr)
+        distance = self.locals.get(id(expr))
         if distance is not None:
             self.environment.assign_at(distance, expr.name, value)
         else:
@@ -170,7 +170,7 @@ class Interpreter:
         return self.lookup_variable(expr.name, expr)
 
     def lookup_variable(self, name: Token, expr: expr.Expr):
-        distance = self.locals.get(expr)
+        distance = self.locals.get(id(expr))
         if distance is not None:
             return self.environment.get_at(distance, name.lexeme)
         else:
