@@ -189,3 +189,21 @@ def test_lexical_scope(capsys: pytest.CaptureFixture[str]):
     lox.run(source)
     actual = capsys.readouterr()
     assert actual.out == expected
+
+
+def test_class_instantiation(capsys: pytest.CaptureFixture[str]):
+    source = textwrap.dedent(
+        """\
+        class Bagel {}
+        var bagel = Bagel();
+        print bagel;
+        """
+    )
+    expected = textwrap.dedent(
+        """\
+        Bagel instance
+        """
+    )
+    lox.run(source)
+    actual = capsys.readouterr()
+    assert actual.out == expected

@@ -7,6 +7,7 @@ import lox.stmt as stmt
 from lox.callable import LoxCallable
 from lox.environment import Environment
 from lox.error import LoxRuntimeError
+from lox.lox_class import LoxClass
 from lox.lox_function import LoxFunction
 from lox.native_function import Clock
 from lox.return_class import Return
@@ -114,6 +115,12 @@ class Interpreter:
                 self.execute(statement)
         finally:
             self.environment = previous
+
+    @execute.register
+    def _(self, stmt: stmt.Class):
+        self.environment.define(stmt.name.lexeme, None)
+        klass = LoxClass(stmt.name.lexeme)
+        self.environment.assign(stmt.name, klass)
 
     def resolve(self, expr: expr.Expr, depth: int):
         self.locals[id(expr)] = depth

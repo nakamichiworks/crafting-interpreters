@@ -1,6 +1,7 @@
 """Lox grammer
 program -> declaration* EOF ;
-declaration -> funDecl | varDecl | statement ;
+declaration -> classDecl | funDecl | varDecl | statement ;
+classDecl -> "class" IDENTIFIER "{" function* "}" ;
 funDecl  -> "fun" function ;
 function -> IDENTIFIER "(" parameters? ")" block ;
 parameters -> IDENTIFIER ( "," IDENTIFIER )* ;
@@ -114,6 +115,8 @@ class Parser:
 
     def declaration(self) -> stmt.Stmt | None:
         try:
+            if self.match(TokenType.CLASS):
+                return self.class_declaration()
             if self.match(TokenType.FUN):
                 return self.function("function")
             if self.match(TokenType.VAR):
@@ -122,6 +125,15 @@ class Parser:
         except ParseError:
             self.synchronize()
             return None
+
+    def class_declaration(self) -> stmt.Class:
+        name = self.consume(TokenType.IDENTIFIER, "Expect class name.")
+        self.consume(TokenType.LEFT_BRACE, "Expect '{' after class name.")
+        methods: list[stmt.Function] = []
+        while not self.check(TokenType.RIGHT_BRACE) and not self.is_at_end():
+            methods.append(self.function("method"))
+        self.consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.")
+        return stmt.Class(name, methods)
 
     def var_declaration(self) -> stmt.Var:
         name = self.consume(TokenType.IDENTIFIER, "Expect variable name.")

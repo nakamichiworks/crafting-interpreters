@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 
 from lox.expr import Expr
@@ -12,6 +14,12 @@ class Stmt:
 @dataclass(frozen=True)
 class Block(Stmt):
     statements: list[Stmt | None]
+
+
+@dataclass(frozen=True)
+class Class(Stmt):
+    name: Token
+    methods: list[Function]
 
 
 @dataclass(frozen=True)

@@ -45,6 +45,11 @@ class Resolver:
         self.end_scope()
 
     @visit.register
+    def _(self, stmt: stmt.Class):
+        self.declare(stmt.name)
+        self.define(stmt.name)
+
+    @visit.register
     def _(self, stmt: stmt.If):
         self.visit(stmt.condition)
         self.visit(stmt.then_branch)
