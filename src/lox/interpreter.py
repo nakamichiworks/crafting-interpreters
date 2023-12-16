@@ -4,10 +4,12 @@ from typing import Any
 import lox.error as error
 import lox.expr as expr
 import lox.stmt as stmt
+from lox.callable import LoxCallable
 from lox.environment import Environment
 from lox.error import LoxRuntimeError
+from lox.native_function import Clock
 from lox.token_type import Token, TokenType
-from lox.callable import LoxCallable
+
 
 def is_truthy(object: Any) -> bool:
     if object is None:
@@ -38,7 +40,9 @@ def stringify(object: Any) -> str:
 
 class Interpreter:
     def __init__(self) -> None:
-        self.environment = Environment()
+        self.global_env = Environment()
+        self.environment = self.global_env
+        self.global_env.define("clock", Clock())
 
     def interpret(self, statements: list[stmt.Stmt]):
         try:
@@ -184,7 +188,10 @@ class Interpreter:
             raise LoxRuntimeError(expr.paren, "Can only call functions and classes.")
         function = callee
         if len(arguments) != function.arity:
-            raise LoxRuntimeError(expr.paren, f"Expected {function.arity} arguments but got {len(arguments)}")
+            raise LoxRuntimeError(
+                expr.paren,
+                f"Expected {function.arity} arguments but got {len(arguments)}",
+            )
         return function(self, arguments)
 
     # utility methods

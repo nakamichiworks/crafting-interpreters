@@ -27,13 +27,13 @@ import lox.stmt as stmt
 from lox.expr import (
     Assign,
     Binary,
+    Call,
     Expr,
     Grouping,
     Literal,
     Logical,
     Unary,
     Variable,
-    Call,
 )
 from lox.token_type import Token, TokenType
 

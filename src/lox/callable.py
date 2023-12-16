@@ -1,7 +1,10 @@
-from typing import Any
-from abc import abstractmethod, ABC
+from __future__ import annotations
 
-from lox.interpreter import Interpreter
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from lox.interpreter import Interpreter
 
 
 class LoxCallable(ABC):

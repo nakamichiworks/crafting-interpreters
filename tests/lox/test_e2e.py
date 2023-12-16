@@ -73,3 +73,17 @@ def test_scope(capsys: pytest.CaptureFixture[str]):
     lox.run(source)
     actual = capsys.readouterr()
     assert actual.out == expected
+
+
+@pytest.mark.freeze_time('2023-12-16 18:17:00')
+def test_clock(capsys: pytest.CaptureFixture[str]):
+    source = textwrap.dedent(
+        """\
+        var t = clock();
+        print t;
+        """
+    )
+    expected = 1702750620
+    lox.run(source)
+    actual = int(capsys.readouterr().out)
+    assert actual == expected
