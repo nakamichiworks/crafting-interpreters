@@ -12,11 +12,12 @@ if TYPE_CHECKING:
 
 
 class LoxFunction(LoxCallable):
-    def __init__(self, declaration: Function) -> None:
+    def __init__(self, declaration: Function, closure: Environment) -> None:
         self.declaration = declaration
+        self.closure = closure
 
     def __call__(self, interpreter: Interpreter, arguments: list[Any]) -> Any:
-        environment = Environment(interpreter.global_env)
+        environment = Environment(self.closure)
         for param, arg in zip(self.declaration.params, arguments):
             environment.define(param.lexeme, arg)
         try:

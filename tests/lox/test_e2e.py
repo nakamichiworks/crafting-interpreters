@@ -135,3 +135,31 @@ def test_fibonacci_recursion(capsys: pytest.CaptureFixture[str]):
     lox.run(source)
     actual = capsys.readouterr()
     assert actual.out == expected
+
+
+def test_counter(capsys: pytest.CaptureFixture[str]):
+    source = textwrap.dedent(
+        """\
+        fun makeCounter() {
+            var i = 0;
+            fun count() {
+                i = i + 1;
+                print i;
+            }
+            return count;
+        }
+
+        var counter = makeCounter();
+        counter();
+        counter();
+        """
+    )
+    expected = textwrap.dedent(
+        """\
+        1
+        2
+        """
+    )
+    lox.run(source)
+    actual = capsys.readouterr()
+    assert actual.out == expected

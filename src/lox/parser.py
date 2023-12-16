@@ -103,7 +103,7 @@ class Parser:
                 TokenType.WHILE,
             ):
                 return
-        self.advance()
+            self.advance()
 
     # parsing methods
     def parse(self) -> list[stmt.Stmt | None]:
@@ -240,7 +240,7 @@ class Parser:
                 parameters.append(
                     self.consume(TokenType.IDENTIFIER, "Expect parameter name.")
                 )
-            self.consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.")
+        self.consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.")
         self.consume(TokenType.LEFT_BRACE, f"Expect '{{' before {kind} body.")
         body = self.block()
         return stmt.Function(name, parameters, body)
